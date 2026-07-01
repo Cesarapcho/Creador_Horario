@@ -1,0 +1,883 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Horario Premium</title>
+
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js"></script>
+
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+
+    :root {
+      --bg: #060914;
+      --panel: rgba(15, 23, 42, 0.82);
+      --panel-2: #0f172a;
+      --line: rgba(148, 163, 184, 0.18);
+      --line-strong: rgba(148, 163, 184, 0.28);
+      --text: #e5eefc;
+      --muted: #94a3b8;
+      --blue: #38bdf8;
+      --blue-dark: #0f5eb8;
+      --danger: #ef4444;
+      --success: #22c55e;
+      --warning: #f59e0b;
+      --gray: #475569;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Segoe UI", Arial, sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.20), transparent 35%),
+        radial-gradient(circle at top right, rgba(168, 85, 247, 0.16), transparent 35%),
+        linear-gradient(135deg, #020617, #08111f 55%, #020617);
+      color: var(--text);
+      min-height: 100vh;
+    }
+
+    .app {
+      width: min(96%, 1500px);
+      margin: 18px auto;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid rgba(148, 163, 184, 0.18);
+      backdrop-filter: blur(14px);
+      border-radius: 24px;
+      padding: 20px;
+      margin-bottom: 18px;
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.35);
+    }
+
+    .panel-small-text {
+      text-align: center;
+      color: var(--muted);
+      font-size: 13px;
+      font-weight: 700;
+      margin-bottom: 16px;
+    }
+
+    .controles {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 12px;
+      align-items: end;
+    }
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 12px;
+      color: #bfdbfe;
+      font-weight: 900;
+      letter-spacing: 0.3px;
+    }
+
+    input,
+    select,
+    button {
+      font-family: inherit;
+      border-radius: 14px;
+      font-size: 14px;
+    }
+
+    input,
+    select {
+      background: rgba(15, 23, 42, 0.95);
+      color: #f8fafc;
+      border: 1px solid rgba(148, 163, 184, 0.28);
+      padding: 12px 14px;
+    }
+
+    input:focus,
+    select:focus {
+      outline: 2px solid rgba(56, 189, 248, 0.75);
+      border-color: #38bdf8;
+    }
+
+    input[type="color"] {
+      padding: 4px;
+      height: 44px;
+      cursor: pointer;
+    }
+
+    button {
+      border: none;
+      padding: 14px 12px;
+      cursor: pointer;
+      color: white;
+      font-weight: 900;
+      transition: 0.2s ease;
+      letter-spacing: 0.2px;
+    }
+
+    button:hover {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    .btn-azul {
+      background: linear-gradient(135deg, #0369a1, #0ea5e9);
+      box-shadow: 0 10px 22px rgba(14, 165, 233, 0.22);
+    }
+
+    .btn-verde {
+      background: linear-gradient(135deg, #15803d, #22c55e);
+      box-shadow: 0 10px 22px rgba(34, 197, 94, 0.18);
+    }
+
+    .btn-rojo {
+      background: linear-gradient(135deg, #b91c1c, #ef4444);
+      box-shadow: 0 10px 22px rgba(239, 68, 68, 0.18);
+    }
+
+    .btn-gris {
+      background: linear-gradient(135deg, #334155, #64748b);
+      box-shadow: 0 10px 22px rgba(100, 116, 139, 0.14);
+    }
+
+    .aviso {
+      color: #93c5fd;
+      font-size: 13px;
+      margin-top: 14px;
+      text-align: center;
+    }
+
+    .preview {
+      display: flex;
+      justify-content: center;
+      overflow-x: auto;
+      padding: 4px;
+    }
+
+    #exportarZona {
+      width: 100%;
+      max-width: 1220px;
+      background:
+        radial-gradient(circle at top left, rgba(56, 189, 248, 0.10), transparent 35%),
+        radial-gradient(circle at bottom right, rgba(168, 85, 247, 0.10), transparent 40%),
+        #070b16;
+      border: 1px solid rgba(148, 163, 184, 0.22);
+      border-radius: 28px;
+      padding: 18px;
+      box-shadow:
+        inset 0 1px 0 rgba(255, 255, 255, 0.05),
+        0 24px 70px rgba(0, 0, 0, 0.35);
+    }
+
+    .horario {
+      display: grid;
+      grid-template-columns: 95px repeat(7, minmax(0, 1fr));
+      grid-template-rows: 52px repeat(14, 47px);
+      width: 100%;
+      border: 1px solid var(--line-strong);
+      border-radius: 22px;
+      overflow: hidden;
+      background: rgba(148, 163, 184, 0.12);
+    }
+
+    .header {
+      background: linear-gradient(135deg, #0f172a, #12325c);
+      color: #e0f2fe;
+      border: 1px solid var(--line-strong);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 12px;
+      font-weight: 950;
+      letter-spacing: 0.8px;
+      text-transform: uppercase;
+    }
+
+    .hora {
+      background: rgba(15, 23, 42, 0.92);
+      color: #cbd5e1;
+      border: 1px solid var(--line);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      font-size: 11px;
+      font-weight: 900;
+      padding: 4px;
+    }
+
+    .celda {
+      background:
+        linear-gradient(135deg, rgba(15, 23, 42, 0.86), rgba(2, 6, 23, 0.88));
+      border: 1px solid var(--line);
+    }
+
+    .clase {
+      margin: 4px;
+      border-radius: 18px;
+      border: 1.8px solid;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      text-align: center;
+      padding: 8px;
+      cursor: pointer;
+      transition: 0.18s ease;
+      z-index: 5;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .clase::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.32), rgba(255,255,255,0.04));
+      pointer-events: none;
+    }
+
+    .clase:hover {
+      transform: scale(1.025);
+      filter: brightness(1.08);
+    }
+
+    .clase.seleccionada {
+      outline: 3px solid #e0f2fe;
+      outline-offset: -4px;
+    }
+
+    .clase-contenido {
+      position: relative;
+      z-index: 2;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      line-height: 1.08;
+      width: 100%;
+    }
+
+    .curso-nombre {
+      color: #07111f;
+      font-size: 10.5px;
+      font-weight: 950;
+      text-transform: uppercase;
+      letter-spacing: 0.25px;
+      text-shadow: 0 1px 0 rgba(255, 255, 255, 0.25);
+    }
+
+    .curso-lugar {
+      margin-top: 10px;
+      color: #67e8f9;
+      background: rgba(2, 6, 23, 0.84);
+      border: 1px solid rgba(103, 232, 249, 0.35);
+      border-radius: 999px;
+      padding: 4px 10px;
+      font-size: 10px;
+      font-weight: 950;
+      letter-spacing: 0.5px;
+      box-shadow: 0 0 18px rgba(103, 232, 249, 0.16);
+    }
+
+    .mini .curso-nombre {
+      font-size: 9.5px;
+    }
+
+    .mini .curso-lugar {
+      font-size: 9px;
+      padding: 3px 8px;
+      margin-top: 7px;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      right: 20px;
+      background: rgba(15, 23, 42, 0.96);
+      color: #e0f2fe;
+      border: 1px solid rgba(56, 189, 248, 0.38);
+      border-radius: 16px;
+      padding: 12px 16px;
+      box-shadow: 0 12px 35px rgba(0,0,0,0.35);
+      opacity: 0;
+      transform: translateY(10px);
+      transition: 0.25s ease;
+      pointer-events: none;
+      font-weight: 800;
+      font-size: 14px;
+    }
+
+    .toast.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    #renderTemp {
+      position: fixed;
+      left: -99999px;
+      top: 0;
+      background: #070b16;
+      padding: 20px;
+      z-index: -1;
+    }
+
+    @media (max-width: 1150px) {
+      .controles {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .horario {
+        grid-template-columns: 80px repeat(7, minmax(0, 1fr));
+        grid-template-rows: 48px repeat(14, 44px);
+      }
+
+      .header {
+        font-size: 10px;
+      }
+
+      .hora {
+        font-size: 9px;
+      }
+
+      .curso-nombre {
+        font-size: 8.7px;
+      }
+
+      .curso-lugar {
+        font-size: 8px;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="app">
+    <div class="panel no-exportar">
+
+      <div class="controles">
+        <div class="campo">
+          <label>Día</label>
+          <select id="dia">
+            <option>LUNES</option>
+            <option>MARTES</option>
+            <option>MIÉRCOLES</option>
+            <option>JUEVES</option>
+            <option>VIERNES</option>
+            <option>SÁBADO</option>
+            <option>DOMINGO</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Inicio</label>
+          <select id="inicio">
+            <option>07:00</option>
+            <option>08:00</option>
+            <option>09:00</option>
+            <option>10:00</option>
+            <option>11:00</option>
+            <option>12:00</option>
+            <option>13:00</option>
+            <option>14:00</option>
+            <option>15:00</option>
+            <option>16:00</option>
+            <option>17:00</option>
+            <option>18:00</option>
+            <option>19:00</option>
+            <option>20:00</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Fin</label>
+          <select id="fin">
+            <option>08:00</option>
+            <option>09:00</option>
+            <option>10:00</option>
+            <option>11:00</option>
+            <option>12:00</option>
+            <option>13:00</option>
+            <option>14:00</option>
+            <option>15:00</option>
+            <option>16:00</option>
+            <option>17:00</option>
+            <option>18:00</option>
+            <option>19:00</option>
+            <option>20:00</option>
+            <option>21:00</option>
+          </select>
+        </div>
+
+        <div class="campo">
+          <label>Curso</label>
+          <input id="curso" type="text" placeholder="Nombre del curso" />
+        </div>
+
+        <div class="campo">
+          <label>Lugar / Aula</label>
+          <input id="lugar" type="text" placeholder="SMP / MIRAFLORES / C1324" />
+        </div>
+
+        <div class="campo">
+          <label>Color del curso</label>
+          <input id="color" type="color" value="#facc15" />
+        </div>
+
+        <button class="btn-azul" onclick="agregarClase()">Agregar curso</button>
+        <button class="btn-verde" onclick="actualizarClase()">Actualizar seleccionado</button>
+        <button class="btn-rojo" onclick="eliminarClase()">Eliminar seleccionado</button>
+        <button class="btn-gris" onclick="guardarCambios()">Guardar cambios</button>
+        <button class="btn-gris" onclick="restaurarHorario()">Restaurar horario</button>
+        <button class="btn-azul" onclick="guardarComoImagen()">Guardar como imagen</button>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="preview">
+        <div id="exportarZona">
+          <div class="horario" id="horario"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div id="renderTemp"></div>
+  <div class="toast" id="toast">Guardado correctamente</div>
+
+  <script>
+    const dias = [
+      "LUNES",
+      "MARTES",
+      "MIÉRCOLES",
+      "JUEVES",
+      "VIERNES",
+      "SÁBADO",
+      "DOMINGO"
+    ];
+
+    const horas = [
+      "07:00 - 08:00",
+      "08:00 - 09:00",
+      "09:00 - 10:00",
+      "10:00 - 11:00",
+      "11:00 - 12:00",
+      "12:00 - 13:00",
+      "13:00 - 14:00",
+      "14:00 - 15:00",
+      "15:00 - 16:00",
+      "16:00 - 17:00",
+      "17:00 - 18:00",
+      "18:00 - 19:00",
+      "19:00 - 20:00",
+      "20:00 - 21:00"
+    ];
+
+    let claseSeleccionada = null;
+
+    const clasesIniciales = [
+      {
+        id: 1,
+        dia: "LUNES",
+        inicio: "10:00",
+        fin: "13:00",
+        curso: "NETWORKING & CLOUD COMPUTING",
+        lugar: "SMP",
+        color: "#86efac",
+        borde: "#22c55e"
+      },
+      {
+        id: 2,
+        dia: "LUNES",
+        inicio: "14:00",
+        fin: "16:00",
+        curso: "NETWORKING & CLOUD COMPUTING",
+        lugar: "SMP",
+        color: "#86efac",
+        borde: "#22c55e"
+      },
+      {
+        id: 3,
+        dia: "LUNES",
+        inicio: "18:00",
+        fin: "21:00",
+        curso: "MACHINE LEARNING",
+        lugar: "MOLINA",
+        color: "#93c5fd",
+        borde: "#3b82f6"
+      },
+      {
+        id: 4,
+        dia: "MARTES",
+        inicio: "07:00",
+        fin: "09:00",
+        curso: "PROYECTO INTEGRADOR",
+        lugar: "SMP",
+        color: "#fde047",
+        borde: "#eab308"
+      },
+      {
+        id: 5,
+        dia: "MARTES",
+        inicio: "10:00",
+        fin: "13:00",
+        curso: "ANÁLISIS Y DISEÑO DE ALGORITMOS",
+        lugar: "SMP",
+        color: "#fda4af",
+        borde: "#f43f5e"
+      },
+      {
+        id: 6,
+        dia: "MARTES",
+        inicio: "14:00",
+        fin: "17:00",
+        curso: "PROYECTO INTEGRADOR",
+        lugar: "SMP",
+        color: "#fde047",
+        borde: "#eab308"
+      },
+      {
+        id: 7,
+        dia: "MARTES",
+        inicio: "17:00",
+        fin: "20:00",
+        curso: "PROYECTO INTEGRADOR",
+        lugar: "SMP",
+        color: "#fde047",
+        borde: "#eab308"
+      },
+      {
+        id: 8,
+        dia: "JUEVES",
+        inicio: "11:00",
+        fin: "13:00",
+        curso: "INGENIERÍA DE SOFTWARE",
+        lugar: "SMP",
+        color: "#c4b5fd",
+        borde: "#8b5cf6"
+      },
+      {
+        id: 9,
+        dia: "JUEVES",
+        inicio: "14:00",
+        fin: "17:00",
+        curso: "PROYECTO INTEGRADOR",
+        lugar: "SMP",
+        color: "#fde047",
+        borde: "#eab308"
+      },
+      {
+        id: 10,
+        dia: "JUEVES",
+        inicio: "17:00",
+        fin: "20:00",
+        curso: "PROYECTO INTEGRADOR",
+        lugar: "SMP",
+        color: "#fde047",
+        borde: "#eab308"
+      },
+      {
+        id: 11,
+        dia: "VIERNES",
+        inicio: "16:00",
+        fin: "18:00",
+        curso: "INGENIERÍA DE SOFTWARE",
+        lugar: "MIRAFLORES",
+        color: "#c4b5fd",
+        borde: "#8b5cf6"
+      },
+      {
+        id: 12,
+        dia: "VIERNES",
+        inicio: "18:00",
+        fin: "20:00",
+        curso: "MACHINE LEARNING",
+        lugar: "MIRAFLORES",
+        color: "#93c5fd",
+        borde: "#3b82f6"
+      },
+      {
+        id: 13,
+        dia: "SÁBADO",
+        inicio: "07:00",
+        fin: "09:00",
+        curso: "ANÁLISIS Y DISEÑO DE ALGORITMOS",
+        lugar: "LA MOLINA",
+        color: "#fda4af",
+        borde: "#f43f5e"
+      }
+    ];
+
+    let clases = JSON.parse(localStorage.getItem("miHorarioPremium")) || [...clasesIniciales];
+
+    function horaANumero(hora) {
+      return Number(hora.split(":")[0]);
+    }
+
+    function escapeHtml(texto) {
+      return String(texto)
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;");
+    }
+
+    function hexToRgba(hex, opacity) {
+      const cleanHex = hex.replace("#", "");
+      const r = parseInt(cleanHex.substring(0, 2), 16);
+      const g = parseInt(cleanHex.substring(2, 4), 16);
+      const b = parseInt(cleanHex.substring(4, 6), 16);
+      return `rgba(${r}, ${g}, ${b}, ${opacity})`;
+    }
+
+    function mostrarToast(texto) {
+      const toast = document.getElementById("toast");
+      toast.textContent = texto;
+      toast.classList.add("visible");
+
+      setTimeout(() => {
+        toast.classList.remove("visible");
+      }, 1800);
+    }
+
+    function renderizarHorario() {
+      const horario = document.getElementById("horario");
+      horario.innerHTML = "";
+
+      const celdaHora = document.createElement("div");
+      celdaHora.className = "header";
+      celdaHora.textContent = "HORA";
+      celdaHora.style.gridColumn = "1";
+      celdaHora.style.gridRow = "1";
+      horario.appendChild(celdaHora);
+
+      dias.forEach((dia, index) => {
+        const header = document.createElement("div");
+        header.className = "header";
+        header.textContent = dia;
+        header.style.gridColumn = index + 2;
+        header.style.gridRow = "1";
+        horario.appendChild(header);
+      });
+
+      horas.forEach((hora, index) => {
+        const fila = index + 2;
+
+        const horaDiv = document.createElement("div");
+        horaDiv.className = "hora";
+        horaDiv.textContent = hora;
+        horaDiv.style.gridColumn = "1";
+        horaDiv.style.gridRow = fila;
+        horario.appendChild(horaDiv);
+
+        dias.forEach((dia, diaIndex) => {
+          const celda = document.createElement("div");
+          celda.className = "celda";
+          celda.style.gridColumn = diaIndex + 2;
+          celda.style.gridRow = fila;
+          horario.appendChild(celda);
+        });
+      });
+
+      clases.forEach((clase) => {
+        const diaIndex = dias.indexOf(clase.dia);
+
+        if (diaIndex === -1) return;
+
+        const inicio = horaANumero(clase.inicio);
+        const fin = horaANumero(clase.fin);
+
+        const columna = diaIndex + 2;
+        const filaInicio = inicio - 7 + 2;
+        const filaFin = fin - 7 + 2;
+
+        const color = clase.color || "#38bdf8";
+        const borde = clase.borde || color;
+
+        const bloque = document.createElement("div");
+        bloque.className = "clase";
+        bloque.style.gridColumn = columna;
+        bloque.style.gridRow = `${filaInicio} / ${filaFin}`;
+        bloque.style.background = `linear-gradient(135deg, ${hexToRgba(color, 1)}, ${hexToRgba(color, 0.72)})`;
+        bloque.style.borderColor = borde;
+        bloque.style.boxShadow = `
+          0 0 0 1px ${hexToRgba(color, 0.18)},
+          0 10px 22px rgba(0, 0, 0, 0.28),
+          0 0 24px ${hexToRgba(color, 0.22)}
+        `;
+
+        bloque.innerHTML = `
+          <div class="clase-contenido">
+            <div class="curso-nombre">${escapeHtml(clase.curso)}</div>
+            <div class="curso-lugar">${escapeHtml(clase.lugar)}</div>
+          </div>
+        `;
+
+        if ((fin - inicio) <= 2) {
+          bloque.classList.add("mini");
+        }
+
+        if (claseSeleccionada === clase.id) {
+          bloque.classList.add("seleccionada");
+        }
+
+        bloque.onclick = () => seleccionarClase(clase.id);
+        horario.appendChild(bloque);
+      });
+    }
+
+    function seleccionarClase(id) {
+      claseSeleccionada = id;
+      const clase = clases.find(c => c.id === id);
+
+      document.getElementById("dia").value = clase.dia;
+      document.getElementById("inicio").value = clase.inicio;
+      document.getElementById("fin").value = clase.fin;
+      document.getElementById("curso").value = clase.curso;
+      document.getElementById("lugar").value = clase.lugar;
+      document.getElementById("color").value = clase.color;
+
+      renderizarHorario();
+    }
+
+    function obtenerDatosFormulario() {
+      const color = document.getElementById("color").value;
+
+      return {
+        dia: document.getElementById("dia").value,
+        inicio: document.getElementById("inicio").value,
+        fin: document.getElementById("fin").value,
+        curso: document.getElementById("curso").value.trim(),
+        lugar: document.getElementById("lugar").value.trim(),
+        color: color,
+        borde: color
+      };
+    }
+
+    function agregarClase() {
+      const datos = obtenerDatosFormulario();
+
+      if (!datos.curso || !datos.lugar) {
+        alert("Completa el nombre del curso y el lugar.");
+        return;
+      }
+
+      if (horaANumero(datos.fin) <= horaANumero(datos.inicio)) {
+        alert("La hora final debe ser mayor que la hora inicial.");
+        return;
+      }
+
+      clases.push({
+        id: Date.now(),
+        ...datos
+      });
+
+      guardarCambios(false);
+      renderizarHorario();
+      mostrarToast("Curso agregado");
+    }
+
+    function actualizarClase() {
+      if (!claseSeleccionada) {
+        alert("Primero selecciona un curso del horario.");
+        return;
+      }
+
+      const datos = obtenerDatosFormulario();
+
+      if (horaANumero(datos.fin) <= horaANumero(datos.inicio)) {
+        alert("La hora final debe ser mayor que la hora inicial.");
+        return;
+      }
+
+      clases = clases.map(clase =>
+        clase.id === claseSeleccionada ? { ...clase, ...datos } : clase
+      );
+
+      guardarCambios(false);
+      renderizarHorario();
+      mostrarToast("Curso actualizado");
+    }
+
+    function eliminarClase() {
+      if (!claseSeleccionada) {
+        alert("Primero selecciona un curso del horario.");
+        return;
+      }
+
+      clases = clases.filter(clase => clase.id !== claseSeleccionada);
+      claseSeleccionada = null;
+
+      guardarCambios(false);
+      renderizarHorario();
+      mostrarToast("Curso eliminado");
+    }
+
+    function guardarCambios(mostrar = true) {
+      localStorage.setItem("miHorarioPremium", JSON.stringify(clases));
+
+      if (mostrar) {
+        mostrarToast("Cambios guardados");
+      }
+    }
+
+    function restaurarHorario() {
+      if (confirm("¿Quieres restaurar el horario original?")) {
+        localStorage.removeItem("miHorarioPremium");
+        location.reload();
+      }
+    }
+
+    async function guardarComoImagen() {
+      guardarCambios(false);
+
+      const original = document.getElementById("exportarZona");
+      const renderTemp = document.getElementById("renderTemp");
+
+      renderTemp.innerHTML = "";
+
+      const clon = original.cloneNode(true);
+      clon.style.width = "1220px";
+      clon.style.maxWidth = "1220px";
+      clon.style.margin = "0";
+      clon.style.boxShadow = "none";
+
+      const horarioClon = clon.querySelector(".horario");
+      horarioClon.style.width = "100%";
+
+      renderTemp.appendChild(clon);
+
+      try {
+        const canvas = await html2canvas(clon, {
+          backgroundColor: "#070b16",
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          width: clon.scrollWidth,
+          height: clon.scrollHeight,
+          windowWidth: clon.scrollWidth,
+          windowHeight: clon.scrollHeight
+        });
+
+        const enlace = document.createElement("a");
+        enlace.download = "horario_premium_oscuro.png";
+        enlace.href = canvas.toDataURL("image/png");
+        enlace.click();
+
+        mostrarToast("Imagen descargada");
+      } catch (error) {
+        console.error(error);
+        alert("Hubo un error al generar la imagen.");
+      }
+
+      renderTemp.innerHTML = "";
+    }
+
+    renderizarHorario();
+  </script>
+</body>
+</html>
